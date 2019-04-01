@@ -1,20 +1,8 @@
+import numpy
 from PIL import Image, ImageDraw
 
-highHeel = Image.open('high_heel.jpg')
-
-width, height = highHeel.size
-
-
-endPoints = [(395, 210), (250, 395)]
-
-draw = ImageDraw.Draw(highHeel)
-draw.line(endPoints, fill='red')
-highHeel.save('try1.png')
-
-firsty = Image.open('try1.png')
-firsty.show()
-
 def drawLines(points, numLines):
+	global fileIndex
 	"""
 	shifts the two endpoints and draws numLines lines on the image, 
 	visualizing possible breaks
@@ -24,18 +12,61 @@ def drawLines(points, numLines):
 	draw = ImageDraw.Draw(highHeel)
 	#rightX and bottomY coordinates stay constant
 	rightPtX, rightPtY = points[0][0], points[0][1]
-	botPtX, botPtY = points[1][0], points[1][1]
+	leftPtX, leftPtY = points[1][0], points[1][1]
 
 	for i in list(range(1, numLines+1)):
-		# shift the point on the bottom of the image left
-		# shift the point on the side of the image down
-		rightPtY+= i*10
-		botPtX+= i*10
+		# shift the point on the top right down
+		rightPtY += 1
 
-		ends = [(rightPtX, rightPtY), (botPtX, botPtY)]
+		ends = [(rightPtX, rightPtY), (leftPtX, leftPtY)]
 		draw.line(ends, fill='red')
-	highHeel.save('try2.png')
+		tryi_string = 'try/' + 'try' + str(fileIndex) + '.png'
+		tryi = Image.open('high_heel.jpg')
+		draw = ImageDraw.Draw(tryi)
+		tiwidth,tiheight = tryi.size
+		highHeel.save(tryi_string)
+		for j in range(tiwidth) :
+			for k in range(tiheight):
+				point = [(j,k)]
+				distance = (j - leftPtX)*(rightPtY - leftPtY) - (k - leftPtY)*(rightPtX - leftPtX)
+				if distance < 0:
+					draw.point(point,fill='white')
+		tryi.save(tryi_string)
+		fileIndex += 1
+def createDiffs(numTries):
+	for i in range(numTries):
+		
+		highHeel = Image.open('high_heel.jpg')
+		width, height = highHeel.size
 
-	firsty = Image.open('try2.png')
-	firsty.show()
+		tryi_string = 'try/' +'try' + str(i + 1) + '.png'
+		tryi = Image.open(tryi_string)
+
+		diff_string = 'diff/' + 'diff' + str(i + 1) + '.png'
+		diffImage = Image.new('RGB', (width, height))
+		
+		for x in range(width):
+			for y in range(height):
+				point = (x,y)
+				highHeelRGBValue = highHeel.getpixel(point)
+				tryiRGBValue = tryi.getpixel(point)
+				diff = tuple(numpy.subtract(tryiRGBValue,highHeelRGBValue))
+				
+				invdiff = tuple(numpy.subtract((255,255,255), diff))
+				diffImage.putpixel(point,invdiff)
+		diffImage.save(diff_string)
+
+fileIndex = 1
+highHeel = Image.open('high_heel.jpg')
+width, height = highHeel.size
+endPoints = [(395, 210), (250, 350)]
+numTries = 300
+numIters = 10
+'''for i in range(numIters):
+	newEndPointXLeft = endPoints[0][0] + 1
+	newEndPointXRight = endPoints[1][0] + 1
+	newEndPoints = [(newEndPointXLeft, endPoints[0][1]), (newEndPointXRight,endPoints[1][1])]
+	drawLines(newEndPoints,numTries)
+'''
+createDiffs(numTries * numIters)
 
